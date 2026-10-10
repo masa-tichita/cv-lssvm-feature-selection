@@ -1,4 +1,4 @@
-# Cross-validated feature selection using LS-SVMs
+# Cross-validated feature selection using least-squares support vector machines for binary classification
 
 **English** | [日本語](README.ja.md)
 
