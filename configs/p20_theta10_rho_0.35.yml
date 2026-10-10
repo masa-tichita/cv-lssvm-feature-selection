@@ -1,0 +1,77 @@
+# Data generator adapted from the simulation design of Purcaru et al. (2026), J. Optim. Theory Appl. 210:16.
+# Paper condition: p=20, theta=10, rho=0.35, 5 valid trials per SNR.
+# Data: X = U L^T with U_j ~ Uniform(-sqrt(3), sqrt(3)) (unit variance), Cov(X) = Sigma.
+# Run: uv run poe run --config configs/p20_theta10_rho_0.35.yml
+
+data:
+  generator: synthetic
+  train_size: 100
+  test_size: 19900
+  features: 20
+  informative: 10
+  rho: 0.35  # Sigma_jl = rho^|j-l|
+  support_mode: random
+  support_seed: null
+  uniform_scaling: unit_variance
+  snr_list: [0.25, 1.0, 4.0]
+  selection_seeds: []
+
+models:
+  # Shared by proposed_hl (Proposed-HL) and proposed_ls (Proposed-LS)
+  proposed:
+    config:
+      max_features: null
+      time_limit: 300
+      opt_gap: 1e-4
+      n_folds: 5
+      shuffle: true
+      cv_seed: 42
+    search:
+      gamma_list: [100.0, 300.0, 500.0, 700.0, 1000.0]
+  svm_cv:
+    config:
+      max_features: null
+      time_limit: 300
+      opt_gap: 1e-4
+      n_folds: 5
+      shuffle: true
+      cv_seed: 42
+      optimality_tol: 1e-7
+    search:
+      C_list: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
+  svm_l1:
+    config: {n_folds: 5, cv_seed: 42}
+    search:
+      C_list: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
+  svm_rfe:
+    config: {n_folds: 5, cv_seed: 42}
+    search:
+      C_list: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
+    step: 1
+  # Shared by logreg_aic (LogReg-AIC) and logreg_bic (LogReg-BIC)
+  logreg:
+    config: {max_features: null, time_limit: 300, opt_gap: 1e-4, tangent_set: V3}
+  # Common L2-SVM refit used for the reported AUC (poe refit).
+  refit_svm:
+    config: {n_folds: 5, shuffle: true, cv_seed: 42, time_limit: null, opt_gap: 1e-4}
+    search:
+      C_list: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
+
+experiment:
+  name: p20_theta10_rho_0.35_t5
+  parameter_selection_scope: per_seed
+  trial_selection:
+    enabled: true
+    target_trials: 5
+    n_folds: 5
+    candidate_seed_start: 1
+    max_candidates_per_snr: 10000
+    require_test_two_classes: true
+  models:
+    - proposed_hl
+    - proposed_ls
+    - svm_cv
+    - svm_l1
+    - svm_rfe
+    - logreg_aic
+    - logreg_bic
